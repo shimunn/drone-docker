@@ -52,6 +52,7 @@ type (
 		LabelSchema []string // label-schema Label map
 		Labels      []string // Label map
 		NoCache     bool     // Docker build no-cache
+		CacheFrom   string // Pull previous image
 	}
 
 	// Plugin defines the Docker plugin parameters.
@@ -111,6 +112,7 @@ func (p Plugin) Exec() error {
 
 	// add proxy build args
 	addProxyBuildArgs(&p.Build)
+
 
 	var cmds []*exec.Cmd
 	cmds = append(cmds, commandVersion()) // docker version
@@ -203,6 +205,14 @@ func commandBuild(build Build) *exec.Cmd {
 	}
 	if build.NoCache {
 		args = append(args, "--no-cache")
+	} else if len(build.CacheFrom) > 0 {
+	        var cacheFrom string
+	        if strings.HasPrefix(build.CacheFrom,":") {
+	                cacheFrom = build.Repo + build.CacheFrom
+	        } else {
+	                cacheFrom = build.CacheFrom
+	        }
+	        args = append(args, "--cache-from", cacheFrom)
 	}
 	for _, arg := range build.ArgsEnv {
 		addProxyValue(&build, arg)
